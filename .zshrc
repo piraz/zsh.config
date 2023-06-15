@@ -79,6 +79,8 @@ source $ZSH/oh-my-zsh.sh
 
 # User configuration
 
+# Common configuration
+source ~/.zshrc.d/common.zsh
 # OS specific configuration
 if [[ $(uname) == "Darwin" ]]; then
     source ~/.zshrc.d/mac.zsh
