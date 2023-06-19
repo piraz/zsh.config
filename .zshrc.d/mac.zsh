@@ -21,3 +21,6 @@ export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 export PATH=/usr/local/go/bin:$PATH:/usr/local/bin
 
 export KUBE_EDITOR=nvim
+
+# Aliases
+alias updatedb="/usr/libexec/locate.updatedb"
