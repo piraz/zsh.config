@@ -14,3 +14,6 @@ alias gpl="git pull"
 alias gps="git push"
 alias ls="ls --color"
 alias t="tmux"
+
+# Completions
+source <(kubectl completion zsh)
