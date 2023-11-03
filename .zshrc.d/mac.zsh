@@ -18,7 +18,7 @@ source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 # From https://cloud.google.com/blog/products/containers-kubernetes/kubectl-auth-changes-in-gke
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
-export PATH=/usr/local/go/bin:$PATH:/usr/local/bin
+export PATH=/usr/local/go/bin:$HOME/bin:$PATH:/usr/local/bin
 
 export KUBE_EDITOR=nvim
 
