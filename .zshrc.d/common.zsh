@@ -1,5 +1,11 @@
 # Variables
+export EDITOR=nvim
 export GOPATH=$HOME/go
+export PIRAZ_SOURCES="~/source/piraz"
+
+if [ -f ~/.piraz_sources ]; then
+    PIRAZ_SOURCES="$PIRAZ_SOURCES $(cat ~/.piraz_sources | paste -sd ' ' -)"
+fi
 
 # Aliases
 alias k="kubectl"
