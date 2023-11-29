@@ -24,5 +24,16 @@ alias n="nvim ."
 alias t="tmux"
 alias se="tsesh"
 
+# Functions
+function ve() {
+    VENV=$(eval "find ~/venvs -mindepth 1 -maxdepth 1 -type d"\
+        | fzf)
+    if [[ -z $VENV ]]; then
+        echo "No venv found"
+    else
+        source $VENV/bin/activate
+    fi
+}
+
 # Completions
 source <(kubectl completion zsh)
