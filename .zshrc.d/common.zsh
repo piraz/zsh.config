@@ -20,6 +20,7 @@ alias gst="git status"
 alias gpl="git pull"
 alias gps="git push"
 alias ls="ls --color"
+alias n="nvim ."
 alias t="tmux"
 alias se="tsesh"
 
