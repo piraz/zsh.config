@@ -35,5 +35,9 @@ function ve() {
     fi
 }
 
+# Keybindings
+bindkey -s "^[s" "se\n"
+bindkey -s "^[v" "ve\n"
+
 # Completions
 source <(kubectl completion zsh)
