@@ -35,9 +35,20 @@ function ve() {
     fi
 }
 
+function gbc() {
+    BRANCH=$(git branch| cat | grep -wv '*' | sed 's/^\s*\|\s*$//g'| fzf)
+    print $BRANCH
+    if [[ -z $BRANCH ]]; then
+        return
+    else
+        git checkout "$BRANCH"
+    fi
+}
+
 # Keybindings
 bindkey -s "^[s" "se\n"
 bindkey -s "^[v" "ve\n"
+bindkey -s "^[g" "gbc\n"
 
 # Completions
 source <(kubectl completion zsh)
