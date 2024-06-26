@@ -1,6 +1,10 @@
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-. /opt/homebrew/opt/asdf/libexec/asdf.sh
+. "$(brew --prefix asdf)/libexec/asdf.sh"
+# append completions to fpath
+fpath=(${ASDF_DIR}/completions $fpath)
+# initialise completions with ZSH's compinit
+autoload -Uz compinit && compinit
 
 # For more information on how to get started, please visit:
 #   https://cloud.google.com/sdk/docs/quickstarts
