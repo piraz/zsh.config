@@ -36,7 +36,8 @@ function ve() {
 }
 
 function gbc() {
-    BRANCH=$(git branch | cat | grep -wv '*' | awk '{$1=$1};1' | fzf)
+    BRANCH=$(echo "$(git branch | cat | grep -wv '*' | awk '{$1=$1};1')\n-" |
+        fzf)
     if [[ -z $BRANCH ]]; then
         return
     else
