@@ -5,6 +5,6 @@ alias wezterm="flatpak run org.wezfurlong.wezterm"
 fpath=(${ASDF_DIR}/completions $fpath)
 # initialise completions with ZSH's compinit
 autoload -Uz compinit && compinit
-
-export PATH=$GOPATH/bin:$HOME/bin:$PATH:/usr/local/bin
+NVIM_PATH="/opt/nvim/current"
+export PATH=$GOPATH/bin:$NVIM_PATH/bin:$HOME/bin:$PATH:/usr/local/bin
 export DOCKER_HOST=unix:///run/user/1000/docker.sock
