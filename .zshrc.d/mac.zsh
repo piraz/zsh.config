@@ -22,7 +22,10 @@ source "$(brew --prefix)/share/google-cloud-sdk/completion.zsh.inc"
 # From https://cloud.google.com/blog/products/containers-kubernetes/kubectl-auth-changes-in-gke
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 
-export PATH=/usr/local/go/bin:$HOME/bin:$PATH:/usr/local/bin
+NODE_VERSION="23.3.0"
+NODE_PATH="$(brew --prefix)/Cellar/node/$NODE_VERSION"
+
+export PATH=/usr/local/go/bin:$NODE_PATH/bin:$HOME/bin:$PATH:/usr/local/bin
 
 export KUBE_EDITOR=nvim
 
