@@ -1,7 +1,7 @@
 # Variables
 export EDITOR=nvim
 export GOPATH=$HOME/go
-export PATH=~/.local/scripts:$PATH
+export PATH=~/.local/scripts:$GOPATH/bin:$PATH
 export PIRAZ_SOURCES="~/source/piraz"
 
 if [ -f ~/.piraz_sources ]; then
