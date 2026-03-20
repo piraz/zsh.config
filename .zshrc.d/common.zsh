@@ -2,7 +2,9 @@
 export EDITOR=nvim
 export GOPATH=$HOME/go
 export NVIM_PATH="/opt/nvim/current"
-export PATH=~/.local/scripts:$GOPATH/bin:$NVIM_PATH/bin:$PATH
+export NVIMM_PATH="/opt/nvim"
+export NVIMM_MIN_RELEASE="0.9.0"
+export PATH=~/.local/scripts:$GOPATH/bin:$NVIM_PATH/bin:$PATH:~/.local/bin
 export PIRAZ_SOURCES="~/source/piraz"
 
 if [ -f ~/.piraz_sources ]; then
