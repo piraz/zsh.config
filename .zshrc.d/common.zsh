@@ -52,6 +52,7 @@ function gbc() {
 bindkey -s "^[s" "se\n"
 bindkey -s "^[v" "ve\n"
 bindkey -s "^[g" "gbc\n"
+bindkey -s "^[r" "source ~/.zshrc\n"
 
 # Completions
 source <(kubectl completion zsh)
