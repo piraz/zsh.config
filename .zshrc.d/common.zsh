@@ -26,6 +26,7 @@ alias ls="ls --color"
 alias n="nvim ."
 alias t="tmux"
 alias se="tsesh"
+alias gcw="git_checkout_worktree"
 
 # Functions
 function ve() {
@@ -46,6 +47,16 @@ function gbc() {
     else
         git checkout "$BRANCH"
     fi
+}
+
+function git_checkout_worktree() {
+    local URI="$1"
+    local NAME="${2:-$(basename "$URI" .git)}"
+
+    git clone --bare "$URI" "$NAME/.bare"
+    echo "gitdir: ./.bare" > "$NAME/.git"
+    git -C "$NAME/.bare" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+    git -C "$NAME/.bare" fetch
 }
 
 # Keybindings
