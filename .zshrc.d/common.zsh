@@ -23,7 +23,6 @@ alias gst="git status"
 alias gpl="git pull"
 alias gps="git push"
 alias ls="ls --color"
-alias n="nvim ."
 alias t="tmux"
 alias se="tsesh"
 alias gbc="git_branch_change"
@@ -77,6 +76,17 @@ function _git_worktree_add() {
 
     git worktree add -b "$branch" "$worktree_path" "origin/$branch" \
         || git worktree add -f -b "$branch" "$worktree_path" "origin/$branch"
+}
+
+function n() {
+    local bare_root
+
+    if _git_bare_root >/dev/null 2>&1; then
+        bare_root=$(_git_bare_root)
+        cd "$bare_root" || return 1
+    fi
+
+    nvim .
 }
 
 function git_branch_change() {
