@@ -27,6 +27,7 @@ alias t="tmux"
 alias se="tsesh"
 alias gbc="git_branch_change"
 alias gwc="git_worktree_change"
+alias gwn="git_worktree_create"
 alias gtc="git_change"
 alias gcw="git_checkout_worktree"
 
@@ -67,15 +68,40 @@ function _git_branch_list() {
 function _git_worktree_add() {
     local branch="$1"
     local worktree_path="$2"
+    local base_branch="$3"
+    local container_root="$4"
+    local base_ref
 
-    if git show-ref --verify --quiet "refs/heads/$branch"; then
-        git worktree add "$worktree_path" "$branch" \
-            || git worktree add -f "$worktree_path" "$branch"
+    mkdir -p "$(dirname "$worktree_path")" || return 1
+
+    if git -C "$container_root" show-ref --verify --quiet "refs/heads/$branch"; then
+        git -C "$container_root" worktree add "$worktree_path" "$branch" \
+            || git -C "$container_root" worktree add -f "$worktree_path" "$branch"
         return
     fi
 
-    git worktree add -b "$branch" "$worktree_path" "origin/$branch" \
-        || git worktree add -f -b "$branch" "$worktree_path" "origin/$branch"
+    if git -C "$container_root" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+        git -C "$container_root" worktree add -b "$branch" "$worktree_path" "origin/$branch" \
+            || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path" "origin/$branch"
+        return
+    fi
+
+    if [[ -n "$base_branch" ]]; then
+        if git -C "$container_root" show-ref --verify --quiet "refs/heads/$base_branch"; then
+            base_ref="$base_branch"
+        elif git -C "$container_root" show-ref --verify --quiet "refs/remotes/origin/$base_branch"; then
+            base_ref="origin/$base_branch"
+        else
+            base_ref="$base_branch"
+        fi
+
+        git -C "$container_root" worktree add -b "$branch" "$worktree_path" "$base_ref" \
+            || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path" "$base_ref"
+        return
+    fi
+
+    git -C "$container_root" worktree add -b "$branch" "$worktree_path" \
+        || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path"
 }
 
 function n() {
@@ -104,16 +130,24 @@ function git_worktree_change() {
 
     container_root=$(_git_bare_root) || return 1
 
+    git -C "$container_root" fetch --prune origin
+
     selected=$({
         printf "%s\t%s\n" "bare" "$container_root"
-        _git_branch_list | while read -r branch; do
-            worktree_path="$container_root/$branch"
-            if [[ -d "$worktree_path" ]]; then
-                printf "%s\t%s\n" "$branch" "change"
-            else
-                printf "%s\t%s\n" "$branch" "create"
-            fi
-        done
+        {
+            _git_branch_list | while read -r branch; do
+                worktree_path="$container_root/$branch"
+                if [[ -d "$worktree_path" ]]; then
+                    printf "%s\t%s\n" "$branch" "change"
+                else
+                    printf "%s\t%s\n" "$branch" "create"
+                fi
+            done
+        } | awk -F '\t' '
+            $2 == "change" { change = change $0 ORS; next }
+            { create = create $0 ORS }
+            END { printf "%s%s", change, create }
+        '
     } | column -t -s $'\t' | fzf --prompt='worktree> ' --with-nth=1,2) || return
 
     branch="${selected%%[[:space:]]*}"
@@ -130,7 +164,28 @@ function git_worktree_change() {
         return
     fi
 
-    _git_worktree_add "$branch" "$worktree_path" || return 1
+    _git_worktree_add "$branch" "$worktree_path" "" "$container_root" || return 1
+    cd "$worktree_path" || return 1
+}
+
+function git_worktree_create() {
+    local base_branch="$1"
+    local container_root branch worktree_path
+
+    container_root=$(_git_bare_root) || return 1
+
+    git -C "$container_root" fetch --prune origin
+
+    read "branch?worktree> "
+    [[ -z "$branch" ]] && return
+
+    worktree_path="$container_root/$branch"
+    if [[ -d "$worktree_path" ]]; then
+        cd "$worktree_path" || return 1
+        return
+    fi
+
+    _git_worktree_add "$branch" "$worktree_path" "$base_branch" "$container_root" || return 1
     cd "$worktree_path" || return 1
 }
 
@@ -157,6 +212,7 @@ function git_checkout_worktree() {
 bindkey -s "^[s" "se\n"
 bindkey -s "^[v" "ve\n"
 bindkey -s "^[g" "gtc\n"
+bindkey -s "^[w" "gwn\n"
 bindkey -s "^[r" "source ~/.zshrc\n"
 
 # Completions
