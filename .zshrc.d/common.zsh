@@ -218,7 +218,9 @@ bindkey -s "^[r" "source ~/.zshrc\n"
 # Completions
 source <(kubectl completion zsh)
 
-# Loads nvm and nvm bash completion
+# Loads nvm
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+
+# Use default Node version automatically
+nvm use default >/dev/null
