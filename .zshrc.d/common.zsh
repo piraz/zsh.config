@@ -28,6 +28,7 @@ alias se="tsesh"
 alias gbc="git_branch_change"
 alias gwc="git_worktree_change"
 alias gwn="git_worktree_create"
+alias gwd="git_worktree_delete"
 alias gtc="git_change"
 alias gcw="git_checkout_worktree"
 
@@ -65,6 +66,16 @@ function _git_branch_list() {
         | awk '!seen[$0]++'
 }
 
+function _git_set_upstream_if_remote_exists() {
+    local branch="$1"
+    local container_root="$2"
+
+    git -C "$container_root" show-ref --verify --quiet "refs/remotes/origin/$branch" || return 0
+    git -C "$container_root" rev-parse --abbrev-ref "$branch@{upstream}" >/dev/null 2>&1 && return 0
+
+    git -C "$container_root" branch --set-upstream-to="origin/$branch" "$branch"
+}
+
 function _git_worktree_add() {
     local branch="$1"
     local worktree_path="$2"
@@ -76,13 +87,17 @@ function _git_worktree_add() {
 
     if git -C "$container_root" show-ref --verify --quiet "refs/heads/$branch"; then
         git -C "$container_root" worktree add "$worktree_path" "$branch" \
-            || git -C "$container_root" worktree add -f "$worktree_path" "$branch"
+            || git -C "$container_root" worktree add -f "$worktree_path" "$branch" \
+            || return 1
+        _git_set_upstream_if_remote_exists "$branch" "$container_root"
         return
     fi
 
     if git -C "$container_root" show-ref --verify --quiet "refs/remotes/origin/$branch"; then
         git -C "$container_root" worktree add -b "$branch" "$worktree_path" "origin/$branch" \
-            || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path" "origin/$branch"
+            || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path" "origin/$branch" \
+            || return 1
+        _git_set_upstream_if_remote_exists "$branch" "$container_root"
         return
     fi
 
@@ -96,12 +111,16 @@ function _git_worktree_add() {
         fi
 
         git -C "$container_root" worktree add -b "$branch" "$worktree_path" "$base_ref" \
-            || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path" "$base_ref"
+            || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path" "$base_ref" \
+            || return 1
+        _git_set_upstream_if_remote_exists "$branch" "$container_root"
         return
     fi
 
     git -C "$container_root" worktree add -b "$branch" "$worktree_path" \
-        || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path"
+        || git -C "$container_root" worktree add -f -b "$branch" "$worktree_path" \
+        || return 1
+    _git_set_upstream_if_remote_exists "$branch" "$container_root"
 }
 
 function n() {
@@ -187,6 +206,60 @@ function git_worktree_create() {
 
     _git_worktree_add "$branch" "$worktree_path" "$base_branch" "$container_root" || return 1
     cd "$worktree_path" || return 1
+}
+
+function git_worktree_delete() {
+    local branch="$1"
+    local container_root current_branch current_top selected worktree_path confirm
+    local branch_delete="-d"
+    local remove_force=()
+
+    if [[ "$branch" == "-f" || "$branch" == "--force" ]]; then
+        branch="$2"
+        branch_delete="-D"
+        remove_force=(--force)
+    fi
+
+    container_root=$(_git_bare_root) || return 1
+
+    if [[ -z "$branch" ]]; then
+        current_branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
+        current_top=$(git rev-parse --show-toplevel 2>/dev/null)
+
+        if [[ -n "$current_branch" && "$current_top" != "$container_root" ]]; then
+            branch="$current_branch"
+            worktree_path="$current_top"
+        else
+            selected=$(git -C "$container_root" worktree list --porcelain | awk -v root="$container_root" '
+                /^worktree / { path = substr($0, 10); branch = "" }
+                /^branch refs\/heads\// { branch = substr($0, 19) }
+                /^$/ { if (branch != "" && path != root) printf "%s\t%s\n", branch, path }
+            ' | fzf --prompt='delete worktree> ' --delimiter=$'\t' --with-nth=1,2) || return
+
+            branch="${selected%%$'\t'*}"
+            worktree_path="${selected#*$'\t'}"
+        fi
+    fi
+
+    [[ -z "$worktree_path" ]] && worktree_path="$container_root/$branch"
+
+    if [[ ! -d "$worktree_path" ]]; then
+        echo "Worktree not found: $worktree_path"
+        return 1
+    fi
+
+    echo "delete worktree: $worktree_path"
+    echo "delete branch:   $branch"
+    read "confirm?delete? [y/N] "
+    [[ "$confirm" == "y" || "$confirm" == "Y" ]] || return
+
+    cd "$container_root" || return 1
+    git -C "$container_root" worktree remove "${remove_force[@]}" "$worktree_path" || return 1
+    git -C "$container_root" worktree prune
+
+    if git -C "$container_root" show-ref --verify --quiet "refs/heads/$branch"; then
+        git -C "$container_root" branch "$branch_delete" "$branch"
+    fi
 }
 
 function git_change() {
