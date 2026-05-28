@@ -10,3 +10,8 @@ autoload -Uz compinit && compinit
 export PATH=$GOPATH/bin:$NVIM_PATH/bin:$HOME/bin:$PATH:/usr/local/bin
 export DOCKER_HOST=unix:///run/user/1000/docker.sock
 . "$HOME/.cargo/env"
+
+# Local machine-specific overrides
+if [[ -f "$HOME/.piraz/zsh/custom.linux.zsh" ]]; then
+    source "$HOME/.piraz/zsh/custom.linux.zsh"
+fi

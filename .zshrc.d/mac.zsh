@@ -33,6 +33,6 @@ export KUBE_EDITOR=nvim
 alias updatedb="/usr/libexec/locate.updatedb"
 
 # Local machine-specific overrides
-if [[ -f "$HOME/.zsh.custom.mac" ]]; then
-    source "$HOME/.zsh.custom.mac"
+if [[ -f "$HOME/.piraz/zsh/custom.mac.zsh" ]]; then
+    source "$HOME/.piraz/zsh/custom.mac.zsh"
 fi
