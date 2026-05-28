@@ -296,4 +296,6 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
 
 # Use default Node version automatically
-nvm use default >/dev/null
+if command -v nvm >/dev/null 2>&1; then
+    nvm use default >/dev/null
+fi
