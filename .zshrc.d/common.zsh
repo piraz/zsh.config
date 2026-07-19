@@ -299,3 +299,8 @@ export NVM_DIR="$HOME/.nvm"
 if command -v nvm >/dev/null 2>&1; then
     nvm use default >/dev/null
 fi
+
+# Loads cargo if exists
+if [[ -f "$HOME/.cargo/env" ]]; then
+    source "$HOME/.cargo/env"
+fi
