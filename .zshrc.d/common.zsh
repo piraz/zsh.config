@@ -281,11 +281,35 @@ function git_checkout_worktree() {
     git -C "$NAME/.bare" fetch
 }
 
-# Keybindings
-bindkey -s "^[s" "se\n"
-bindkey -s "^[v" "ve\n"
-bindkey -s "^[g" "gtc\n"
-bindkey -s "^[w" "gwn\n"
+# ZLE widgets
+function zsh_fzf_widget() {
+    local action
+
+    case "$WIDGET" in
+        fzf_session)         action=tsesh ;;
+        fzf_git_change)      action=git_change ;;
+        fzf_venv)            action=ve ;;
+        fzf_worktree_create) action=git_worktree_create ;;
+        fzf_worktree_delete) action=git_worktree_delete ;;
+        *) return 1 ;;
+    esac
+
+    zle -I
+    "$action"
+    zle reset-prompt
+}
+
+zle -N fzf_session zsh_fzf_widget
+zle -N fzf_git_change zsh_fzf_widget
+zle -N fzf_venv zsh_fzf_widget
+zle -N fzf_worktree_create zsh_fzf_widget
+zle -N fzf_worktree_delete zsh_fzf_widget
+
+bindkey '^[s' fzf_session
+bindkey '^[v' fzf_venv
+bindkey '^[g' fzf_git_change
+bindkey '^[w' fzf_worktree_create
+bindkey '^[W' fzf_worktree_delete
 bindkey -s "^[r" "source ~/.zshrc\n"
 
 # Completions
