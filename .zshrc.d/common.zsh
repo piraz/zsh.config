@@ -211,54 +211,58 @@ function git_worktree_create() {
 function git_worktree_delete() {
     local branch="$1"
     local container_root current_branch current_top selected worktree_path confirm
-    local branch_delete="-d"
-    local remove_force=()
+    local changes local_worktrees
 
-    if [[ "$branch" == "-f" || "$branch" == "--force" ]]; then
-        branch="$2"
-        branch_delete="-D"
-        remove_force=(--force)
-    fi
-
-    container_root=$(_git_bare_root) || return 1
+    container_root=$(_git_bare_root 2>/dev/null) || return 0
 
     if [[ -z "$branch" ]]; then
         current_branch=$(git symbolic-ref --quiet --short HEAD 2>/dev/null)
         current_top=$(git rev-parse --show-toplevel 2>/dev/null)
 
-        if [[ -n "$current_branch" && "$current_top" != "$container_root" ]]; then
+        if [[ -n "$current_branch" &&
+              -n "$current_top" &&
+              "$current_top" != "$container_root" ]]; then
             branch="$current_branch"
             worktree_path="$current_top"
         else
-            selected=$(git -C "$container_root" worktree list --porcelain | awk -v root="$container_root" '
+            local_worktrees=$(git -C "$container_root" worktree list --porcelain | awk -v root="$container_root" '
                 /^worktree / { path = substr($0, 10); branch = "" }
                 /^branch refs\/heads\// { branch = substr($0, 19) }
                 /^$/ { if (branch != "" && path != root) printf "%s\t%s\n", branch, path }
-            ' | fzf --prompt='delete worktree> ' --delimiter=$'\t' --with-nth=1,2) || return
+                END { if (branch != "" && path != root) printf "%s\t%s\n", branch, path }
+            ')
+            [[ -z "$local_worktrees" ]] && return
 
+            selected=$(printf "%s\n" "$local_worktrees" |
+                fzf --prompt='delete worktree> ' --delimiter=$'\t' --with-nth=1,2) || return
+
+            [[ -z "$selected" ]] && return
             branch="${selected%%$'\t'*}"
             worktree_path="${selected#*$'\t'}"
         fi
     fi
 
     [[ -z "$worktree_path" ]] && worktree_path="$container_root/$branch"
+    [[ -d "$worktree_path" ]] || return 0
 
-    if [[ ! -d "$worktree_path" ]]; then
-        echo "Worktree not found: $worktree_path"
+    changes=$(git -C "$worktree_path" status --porcelain --untracked-files=no)
+    if [[ -n "$changes" ]]; then
+        echo "Cannot delete worktree with tracked or staged changes: $worktree_path"
         return 1
     fi
 
-    echo "delete worktree: $worktree_path"
-    echo "delete branch:   $branch"
-    read "confirm?delete? [y/N] "
-    [[ "$confirm" == "y" || "$confirm" == "Y" ]] || return
+    echo "⚠️ You are about to delete worktree '$branch' at '$worktree_path'."
+    echo "This removes the checkout and deletes the local branch."
+    echo "Do you understand you are deleting this worktree? Type '$branch' exactly to confirm:"
+    read "confirm?> "
+    [[ "$confirm" == "$branch" ]] || return
 
     cd "$container_root" || return 1
-    git -C "$container_root" worktree remove "${remove_force[@]}" "$worktree_path" || return 1
+    git -C "$container_root" worktree remove "$worktree_path" || return 1
     git -C "$container_root" worktree prune
 
     if git -C "$container_root" show-ref --verify --quiet "refs/heads/$branch"; then
-        git -C "$container_root" branch "$branch_delete" "$branch"
+        git -C "$container_root" branch -D "$branch"
     fi
 }
 
