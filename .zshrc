@@ -88,6 +88,11 @@ elif [[ $(uname) == "Linux" ]]; then
     source ~/.zshrc.d/linux.zsh
 fi
 
+# User-local configuration (kept outside this repository)
+if [[ -f "$HOME/.zshrc_$(whoami)" ]]; then
+    source "$HOME/.zshrc_$(whoami)"
+fi
+
 # export MANPATH="/usr/local/man:$MANPATH"
 
 # You may need to manually set your language environment
